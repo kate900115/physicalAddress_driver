@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
 	int res = -1;
 	//unsigned count=0x0A000000;
 
-	int fd = open("/dev/"GPUMEM_DRIVER_NAME, O_RDWR, 0);
+	int fd = open("/dev/Catapult FPGA", O_RDWR, 0);
+	//int fd = open("/dev/"GPUMEM_DRIVER_NAME, O_RDWR, 0);
 	if (fd < 0) {
 		printf("Error open file %s\n", "/dev/"GPUMEM_DRIVER_NAME);
 		return -1;

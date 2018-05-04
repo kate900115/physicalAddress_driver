@@ -122,7 +122,10 @@ static int __init gpumem_init(void)
     dev.proc = 0;
     sema_init(&dev.sem, 1);
     INIT_LIST_HEAD(&dev.table_list);
+    //zyuxuan
     gpumem_register_proc(GPUMEM_DRIVER_NAME, 0, &dev);
+    //gpumem_register_proc("Catapult FPGA", 0, &dev);
+
     misc_register(&gpumem_dev);
     return 0;
 }
