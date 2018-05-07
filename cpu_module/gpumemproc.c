@@ -39,7 +39,7 @@ static void show_mem_info( struct gpumem *drv, struct seq_file *m )
 
     print_info(m, "%s\n", "Pinned memory info:");
 
-    list_for_each_safe(pos, n, &drv->table_list) {
+/*    list_for_each_safe(pos, n, &drv->table_list) {
 
         struct gpumem_t *entry = list_entry(pos, struct gpumem_t, list);
         if(entry) {
@@ -62,7 +62,7 @@ static void show_mem_info( struct gpumem *drv, struct seq_file *m )
                 ++idx;
             }
         }
-    }
+    }*/
 }
 
 //--------------------------------------------------------------------
