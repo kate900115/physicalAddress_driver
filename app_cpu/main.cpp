@@ -23,10 +23,10 @@
 #include <iostream>
 
 // zyuxuan for FPGA
-#include "FPGA/FPGACoreLib.h"
-#include "FPGA/FPGACoreLib.cpp"
-#include "FPGA/FPGAHealthLib.h"
-#include "FPGA/FPGAHealthLib.cpp"
+//#include "FPGA/FPGACoreLib.h"
+//#include "FPGA/FPGACoreLib.cpp"
+//#include "FPGA/FPGAHealthLib.h"
+//#include "FPGA/FPGAHealthLib.cpp"
 
 //-----------------------------------------------------------------------------
 
@@ -53,19 +53,67 @@ int main(int argc, char *argv[])
 	// zyuxuan
 
 
-	vaddr = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
-	int *addr;
-	addr = (int*) malloc(sizeof(int));
-	vaddr->handle = (void*)addr;
-	vaddr->paddr = 0;
+//	vaddr = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+//	int *addr;
+//	addr = (int*) malloc(sizeof(int));
+//	vaddr->handle = (void*)addr;
+//	vaddr->paddr = 0;
 
-	res = ioctl(fd, IOCTL_GPUMEM_LOCK, vaddr); 
+	/*----------test-----------*/
+	cpuaddr_state_t *test;
+	
+	test = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	int *addr1;
+	addr1 = (int*) malloc(sizeof(int));
+	test->handle = (void*)addr1;
+	test->paddr = 0;
+
+	res = ioctl(fd, IOCTL_GPUMEM_LOCK, test); 
 	if (res<0){
 		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
 		exit(-1);
 	}
 
-	std::cout<<"physical address = "<<vaddr->paddr<<std::endl;
+	std::cout<<"virtual to physical"<<std::endl;
+	std::cout<<"physical address = "<<test->paddr<<std::endl;
+
+	/*----------test----------*/
+
+	cpuaddr_state_t *test_p2v;
+	test_p2v = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	test_p2v->handle = NULL;
+	test_p2v->paddr = test->paddr;
+	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, test_p2v);
+
+	if (res<0){
+		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		exit(-1);
+	}
+
+	int* virt_addr = (int*)test_p2v->handle;
+	*virt_addr = 1;
+
+	std::cout<<"value = "<<*addr1<<std::endl;
+/*
+	void* va = mmap(0, 512, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (va == MAP_FAILED){
+		fprintf(stderr, "%s():%s\n", __FUNCTION__, strerror(errno));
+		va = 0;
+	}
+	else{
+		int *Addr = (int*) va;
+		vaddr->handle = va;
+		vaddr->paddr = 0;
+		res = ioctl(fd, IOCTL_GPUMEM_LOCK, vaddr);
+		if (res<0){
+			fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		}
+		std::cout<<"physical address = "<<vaddr->paddr<<std::endl;
+
+		munmap(va, 512);
+	}
+*/
+
 
 	close(fd);
 

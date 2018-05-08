@@ -66,6 +66,10 @@ static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg
 	error = ioctl_mem_convert(arg);
 	pr_info("@@@@@@@@@@ The ioctl_mem_convert(arg) is called.\n");
     }
+    if (cmd==IOCTL_GPUMEM_UNLOCK){
+	error = ioctl_p2v_convert(arg);
+	pr_info("@@@@@@@@@@ The ioctl_p2v_convert(arg) is called.\n");
+    }
 
     return error;
 }

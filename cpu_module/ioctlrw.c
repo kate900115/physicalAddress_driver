@@ -72,3 +72,35 @@ int ioctl_mem_convert(unsigned long arg){
 	return error;
 }
 
+
+//zyuxuan
+int ioctl_p2v_convert(unsigned long arg){
+	int error = 0;
+	// to copy the argument from user space to kernel space
+	struct cpuaddr_state_t addr;
+	if (copy_from_user(&addr, (void*)arg, sizeof(struct cpuaddr_state_t))){
+		printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
+		error = -EFAULT;
+		return error;
+	}
+
+	void* address = phys_to_virt(addr.paddr);
+
+ 	pr_info("@@@@I'm ioctl_p2v_convert\n");	
+	pr_info("physical address = %ld\n", addr.paddr);
+	
+	addr.handle = address;
+
+
+	if (copy_to_user((void*)arg, &addr, sizeof(struct cpuaddr_state_t))){
+		printk(KERN_ERR"%s(): Error in copy_from_user()\n",__FUNCTION__);
+		error = -EFAULT;
+		return error;
+	}
+
+	return error;
+}
+
+
+
+
