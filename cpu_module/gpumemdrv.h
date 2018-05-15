@@ -33,6 +33,7 @@ struct gpumem {
 
 int get_nv_page_size(int val);
 
+static uint64_t addrRecord;
 //-----------------------------------------------------------------------------
 
 #endif

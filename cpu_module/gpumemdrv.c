@@ -26,6 +26,15 @@
 #include "ioctlrw.h"
 #include "gpumemioctl.h"
 #include "gpumemproc.h"
+#include <linux/memremap.h>
+#include <linux/delay.h>
+#include <linux/mm.h>
+#include <linux/moduleparam.h>
+#include <linux/errno.h>
+#include <linux/ioctl.h>
+#include <linux/cdev.h>
+
+
 
 //-----------------------------------------------------------------------------
 
@@ -34,6 +43,7 @@ MODULE_LICENSE("GPL");
 
 //-----------------------------------------------------------------------------
 static struct gpumem dev;
+
 //-----------------------------------------------------------------------------
 
 static struct gpumem *file_to_device( struct file *file )
@@ -78,23 +88,60 @@ static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg
 
 int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
 {
-    size_t size = vma->vm_end - vma->vm_start;
+	size_t size = vma->vm_end - vma->vm_start;
 
-    if (!(vma->vm_flags & VM_MAYSHARE))
-        return -EINVAL;
+	if (!(vma->vm_flags & VM_MAYSHARE)){
+		return -EINVAL;
+	}
+	
+	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	
+	//    void* kmalloc_area = kmalloc(512, GFP_USER);
 
-    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	//    if (kmalloc_area==NULL){
+	//	pr_info("@@@@@ kmalloc failed!");
+	//    }
+	//vma->vm_flags = vma->vm_flags | VM_LOCKED；
+	//uint64_t phyAddr = virt_to_phys(kmalloc_area);
 
-    if (remap_pfn_range(vma,
-                        vma->vm_start,
-                        vma->vm_pgoff,
-                        size,
-                        vma->vm_page_prot)) {
-        pr_err("%s(): error in remap_page_range.\n", __func__ );
-        return -EAGAIN;
-    }
+	pr_info("I'm in mmap\n");
 
-    return 0;
+	// read value from savedPhysAddr
+	uint64_t a = savedPhysAddr(0, 1);
+	pr_info("physical address = %ld\n", a);
+
+	// write to savedPhysAddr to be 0
+	savedPhysAddr(0,0);
+
+	if (a!=0){
+		void* ioremap_area = ioremap(a, 4096);
+
+		if (ioremap_area==NULL){
+			pr_info("ioremap unsuccessful\n");
+		}
+
+		pr_info("physical address = %ld\n", a);
+		int errorCode = remap_pfn_range(vma, vma->vm_start, a, size, PAGE_SHARED);  
+	 
+		if (errorCode){
+			return -ENXIO;
+		}
+
+		return 0;
+	}
+	else{
+		void* kmalloc_area = kmalloc(size, GFP_USER);
+		uint64_t phyaddr = virt_to_phys(kmalloc_area);
+		int errorCode = remap_pfn_range(vma, vma->vm_start, phyaddr, size, PAGE_SHARED);
+		if (errorCode){
+			return -ENXIO;
+		}
+
+		savedPhysAddr(phyaddr,0);
+		return 0;
+	}
+
+
 }
 
 //-----------------------------------------------------------------------------

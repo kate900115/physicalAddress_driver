@@ -44,6 +44,19 @@ void free_nvp_callback(void *data)
 }
 
 
+uint64_t savedPhysAddr(uint64_t addr, bool isRead ){
+	static uint64_t AddrSaved = 0;
+	static int a = 0;
+	a++;
+	pr_info("the function is called a=%d times\n",a);
+	pr_info("saved addr = %ld\n", AddrSaved);
+	if (isRead) return AddrSaved;
+	AddrSaved = addr;
+	return 0;
+
+}
+
+
 //zyuxuan
 int ioctl_mem_convert(unsigned long arg){
 	int error = 0;
@@ -55,9 +68,11 @@ int ioctl_mem_convert(unsigned long arg){
 		return error;
 	}
 
+	
 	void* address = addr.handle;
 	phys_addr_t paddr = virt_to_phys(address);
-	addr.paddr = paddr;
+	addr.paddr = savedPhysAddr(0,1);
+	savedPhysAddr(0,0);
 
  	pr_info("@@@@I'm ioctl_mem_convert\n");	
 	pr_info("physical address = %ld\n", addr.paddr);
@@ -72,7 +87,6 @@ int ioctl_mem_convert(unsigned long arg){
 	return error;
 }
 
-
 //zyuxuan
 int ioctl_p2v_convert(unsigned long arg){
 	int error = 0;
@@ -84,23 +98,16 @@ int ioctl_p2v_convert(unsigned long arg){
 		return error;
 	}
 
-	void* address = phys_to_virt(addr.paddr);
 
+	uint64_t a = savedPhysAddr(addr.paddr, 0);
  	pr_info("@@@@I'm ioctl_p2v_convert\n");	
 	pr_info("physical address = %ld\n", addr.paddr);
 	
-	addr.handle = address;
+	
 
 
-	if (copy_to_user((void*)arg, &addr, sizeof(struct cpuaddr_state_t))){
-		printk(KERN_ERR"%s(): Error in copy_from_user()\n",__FUNCTION__);
-		error = -EFAULT;
-		return error;
-	}
 
 	return error;
 }
-
-
 
 

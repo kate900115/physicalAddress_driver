@@ -34,9 +34,20 @@ void checkError(CUresult status);
 
 //-----------------------------------------------------------------------------
 
+uint64_t interpAddr = 0x8;
+uint64_t FPGA_BASE = 0x90000000;
+uint64_t REG_OFFSET = 0x800000;
+	
+
+uint64_t read_user_reg( uint64_t usr_reg_addr){
+	uint64_t physAddr = FPGA_BASE + ((interpAddr << 4) | (usr_reg_addr));
+	return physAddr;
+}
+
+
+
 int main(int argc, char *argv[])
 {
-	//zyuxuan
 	cpuaddr_state_t *vaddr;
 
 	int res = -1;
@@ -49,18 +60,9 @@ int main(int argc, char *argv[])
 		return -1;
 	}	
 
-	// TODO: add kernel driver interaction...
-	// zyuxuan
-
-
-//	vaddr = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
-//	int *addr;
-//	addr = (int*) malloc(sizeof(int));
-//	vaddr->handle = (void*)addr;
-//	vaddr->paddr = 0;
 
 	/*----------test-----------*/
-	cpuaddr_state_t *test;
+/*	cpuaddr_state_t *test;
 	
 	test = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
 	int *addr1;
@@ -76,9 +78,9 @@ int main(int argc, char *argv[])
 
 	std::cout<<"virtual to physical"<<std::endl;
 	std::cout<<"physical address = "<<test->paddr<<std::endl;
-
+*/
 	/*----------test----------*/
-
+/*
 	cpuaddr_state_t *test_p2v;
 	test_p2v = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
 	test_p2v->handle = NULL;
@@ -94,6 +96,52 @@ int main(int argc, char *argv[])
 	*virt_addr = 1;
 
 	std::cout<<"value = "<<*addr1<<std::endl;
+*/
+
+	/*----------test-----------*/
+
+
+	//configure package length
+	uint64_t lengthAddr = read_user_reg(0xC);
+	cpuaddr_state_t *length;
+	length = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	length->handle = NULL;
+	length->paddr = lengthAddr;
+	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, length);
+
+	if (res<0){
+		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		exit(-1);
+	}
+
+//	uint64_t* vAddr = (uint64_t*)length->handle;
+//	*vAddr = 0x100;
+
+	void* va = mmap(0, 512, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	
+	if (va == MAP_FAILED){
+		fprintf(stderr, "%s():%s\n", __FUNCTION__, strerror(errno));
+		va = 0;
+	}
+
+	int* add = (int*) va;
+	*add = 1;	
+	// configure package address
+	/*lengthAddr = read_user_reg(0xE);
+	length->handle = NULL;
+	length->paddr = lengthAddr;
+	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, length);
+
+	if (res<0){
+		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		exit(-1);
+	}
+
+	uint64_t* vAddr = (uint64_t*)length->handle;
+	*vAddr = 0x100;*/
+
+
+
 /*
 	void* va = mmap(0, 512, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (va == MAP_FAILED){
