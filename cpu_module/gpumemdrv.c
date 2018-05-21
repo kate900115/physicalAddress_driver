@@ -73,12 +73,12 @@ static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg
 {
     int error = 0;
     if (cmd==IOCTL_GPUMEM_LOCK) {
-	error = ioctl_mem_convert(arg);
-	pr_info("@@@@@@@@@@ The ioctl_mem_convert(arg) is called.\n");
+	pr_info("[gpumem_ioctl] The ioctl_v2p_convert(arg) is called.\n");
+	error = ioctl_v2p_convert(arg);
     }
     if (cmd==IOCTL_GPUMEM_UNLOCK){
+	pr_info("[gpumem_ioctl] The ioctl_p2v_convert(arg) is called.\n");
 	error = ioctl_p2v_convert(arg);
-	pr_info("@@@@@@@@@@ The ioctl_p2v_convert(arg) is called.\n");
     }
 
     return error;
@@ -88,6 +88,9 @@ static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg
 
 int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
 {
+
+	pr_info("[mmap] I'm in mmap\n");
+
 	size_t size = vma->vm_end - vma->vm_start;
 
 	if (!(vma->vm_flags & VM_MAYSHARE)){
@@ -97,48 +100,63 @@ int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	
 	//    void* kmalloc_area = kmalloc(512, GFP_USER);
-
 	//    if (kmalloc_area==NULL){
 	//	pr_info("@@@@@ kmalloc failed!");
 	//    }
-	//vma->vm_flags = vma->vm_flags | VM_LOCKED；
 	//uint64_t phyAddr = virt_to_phys(kmalloc_area);
 
-	pr_info("I'm in mmap\n");
-
+	
 	// read value from savedPhysAddr
-	uint64_t a = savedPhysAddr(0, 1);
-	pr_info("physical address = %ld\n", a);
+	
+	struct savedAddress savedAddr;
+	savedAddr = savedPhysAddr(0, 0, 1);
 
-	// write to savedPhysAddr to be 0
-	savedPhysAddr(0,0);
+	pr_info("[mmap] read previously saved address from kernel\n");
+	pr_info("[mmap] physical address = %ld\n", savedAddr.addr);
 
-	if (a!=0){
-		void* ioremap_area = ioremap(a, 4096);
+	if (savedAddr.op==1){
+		//p2v
+	//	void* ioremap_area = ioremap(savedAddr.addr, size);
+	//	if (ioremap_area==NULL){
+	//		pr_info("[mmap] ioremap unsuccessful\n");
+	//		return -ENXIO;
+	//	}
+		
+		//int errorCode = remap_pfn_range(vma, vma->vm_start+savedAddr.addr, savedAddr.addr, size, PAGE_SHARED);  
+		int errorCode = remap_pfn_range(vma, vma->vm_start, savedAddr.addr>>PAGE_SHIFT, size, PAGE_SHARED);  
 
-		if (ioremap_area==NULL){
-			pr_info("ioremap unsuccessful\n");
-		}
 
-		pr_info("physical address = %ld\n", a);
-		int errorCode = remap_pfn_range(vma, vma->vm_start, a, size, PAGE_SHARED);  
+		// write noop to saved address operation element
+		savedPhysAddr(savedAddr.addr, 0, 0);
 	 
 		if (errorCode){
 			return -ENXIO;
 		}
 
 		return 0;
+	
 	}
-	else{
+
+	else if (savedAddr.op==0){
+		//v2p
 		void* kmalloc_area = kmalloc(size, GFP_USER);
 		uint64_t phyaddr = virt_to_phys(kmalloc_area);
-		int errorCode = remap_pfn_range(vma, vma->vm_start, phyaddr, size, PAGE_SHARED);
+		savedPhysAddr(phyaddr,2,0);
+
+		if (kmalloc_area==NULL){
+			pr_info("[mmap] kmalloc area failed\n");
+			return -ENXIO;
+		}
+		//int errorCode = remap_pfn_range(vma, vma->vm_start+phyaddr, phyaddr, size, PAGE_SHARED);
+		int errorCode = remap_pfn_range(vma, vma->vm_start, phyaddr>>PAGE_SHIFT, size, PAGE_SHARED);  
+
+
 		if (errorCode){
 			return -ENXIO;
 		}
 
-		savedPhysAddr(phyaddr,0);
 		return 0;
+
 	}
 
 

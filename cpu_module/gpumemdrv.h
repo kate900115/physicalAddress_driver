@@ -33,7 +33,17 @@ struct gpumem {
 
 int get_nv_page_size(int val);
 
-static uint64_t addrRecord;
+//enum ioctlOp {
+//	P2V, //1
+//	V2P, //2
+//	noop//0
+//};
+
+struct savedAddress{
+	uint64_t addr;
+	int op; // if isP2V=0 means it's V2P
+};
+
 //-----------------------------------------------------------------------------
 
 #endif
