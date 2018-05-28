@@ -35,7 +35,6 @@ void checkError(CUresult status);
 
 uint64_t interpAddr = 0x8;
 uint64_t FPGA_BASE = 0x90000000;
-//uint64_t REG_OFFSET = 0x800000;
 	
 
 uint64_t read_user_reg( uint64_t usr_reg_addr){
@@ -69,7 +68,7 @@ int main(int argc, char *argv[])
 	phy->handle = NULL;
 	phy->paddr = 0;
 	
-	res = ioctl(fd, IOCTL_GPUMEM_LOCK, phy);
+	res = ioctl(fd, IOCTL_V2P, phy);
 	
 	if (res<0){
 		fprintf(stderr, "Error in IOCTL_LOCK\n");
@@ -87,7 +86,7 @@ int main(int argc, char *argv[])
 	length = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
 	length->handle = NULL;
 	length->paddr = lengthAddr;
-	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, length);
+	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
 		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
@@ -115,7 +114,7 @@ int main(int argc, char *argv[])
 	lengthAddr = read_user_reg(0xE);
 	length->handle = NULL;
 	length->paddr = lengthAddr;
-	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, length);
+	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
 		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
 	lengthAddr = read_user_reg(0x8);
 	length->handle = NULL;
 	length->paddr = lengthAddr;
-	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, length);
+	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
 		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
@@ -157,7 +156,7 @@ int main(int argc, char *argv[])
 	lengthAddr = read_user_reg(0x30);
 	length->handle = NULL;
 	length->paddr = lengthAddr;
-	res = ioctl(fd, IOCTL_GPUMEM_UNLOCK, length);
+	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
 		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");

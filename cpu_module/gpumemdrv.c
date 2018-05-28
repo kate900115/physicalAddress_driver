@@ -72,11 +72,11 @@ static int gpumem_close( struct inode *inode, struct file *file )
 static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg )
 {
     int error = 0;
-    if (cmd==IOCTL_GPUMEM_LOCK) {
+    if (cmd==IOCTL_V2P) {
 	pr_info("[gpumem_ioctl] The ioctl_v2p_convert(arg) is called.\n");
 	error = ioctl_v2p_convert(arg);
     }
-    if (cmd==IOCTL_GPUMEM_UNLOCK){
+    if (cmd==IOCTL_P2V){
 	pr_info("[gpumem_ioctl] The ioctl_p2v_convert(arg) is called.\n");
 	error = ioctl_p2v_convert(arg);
     }

@@ -19,8 +19,8 @@
 #define GPUMEM_MAKE_IOCTL(c) _IO(GPUMEM_DEVICE_TYPE, (c))
 #endif
 
-#define IOCTL_GPUMEM_LOCK		GPUMEM_MAKE_IOCTL(10)
-#define IOCTL_GPUMEM_UNLOCK		GPUMEM_MAKE_IOCTL(11)
+#define IOCTL_V2P		GPUMEM_MAKE_IOCTL(10)
+#define IOCTL_P2V		GPUMEM_MAKE_IOCTL(11)
 #define IOCTL_GPUMEM_STATE		GPUMEM_MAKE_IOCTL(12)
 
 //-----------------------------------------------------------------------------
