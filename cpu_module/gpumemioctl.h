@@ -4,8 +4,7 @@
 
 //-----------------------------------------------------------------------------
 
-//#define GPUMEM_DRIVER_NAME             "gpumem"
-#define GPUMEM_DRIVER_NAME             "Catapult FPGA"
+#define GPUMEM_DRIVER_NAME             "v2p2v"
 
 
 //-----------------------------------------------------------------------------
