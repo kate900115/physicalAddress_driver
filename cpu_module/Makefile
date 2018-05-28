@@ -22,8 +22,8 @@ ccflags-y += $(EXTRA_CFLAGS)
 
 ifneq ($(KERNELRELEASE),)
 
-obj-m += gpumem.o
-gpumem-objs := gpumemproc.o ioctlrw.o gpumemdrv.o
+obj-m += v2p2v.o
+v2p2v-objs := gpumemproc.o ioctlrw.o gpumemdrv.o
 
 else
 
