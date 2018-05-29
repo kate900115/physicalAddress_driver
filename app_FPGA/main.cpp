@@ -100,19 +100,16 @@ int main(int argc, char *argv[])
 
 	void* va = mmap(0, 512, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-	printf("virtual addr = %p\n", va);
-
-
 	if (va == MAP_FAILED){
 		fprintf(stderr, "%s():%s\n", __FUNCTION__, strerror(errno));
 		va = 0;
 	}
 
-	int* add = (int*)getAddrWithOffset(va, 0xC);
+	int* len = (int*)getAddrWithOffset(va, 0xC);
 	
-	*add = 1024;
-	printf("add = %p\n", add);
-	printf("add = %d\n", *add);
+	*len = 1024;
+	printf("add = %p\n", len);
+	printf("add = %d\n", *len);
 	
 	// configure package address
 	// and send the physical address to FPGA
@@ -132,11 +129,10 @@ int main(int argc, char *argv[])
 		va0 = 0;
 	}
 
+	int* PackAddr = (int*)getAddrWithOffset(va0, 0xE);
+	*PackAddr = phy->paddr; 
 
-	char* tmp1 = (char*) va0;
-
-	int* add0 = (int*)getAddrWithOffset(va0, 0xE);
-	*add0 = phy->paddr; 
+	printf("PackAddr = %p\n", *PackAddr);
 
 	// send magic number to FPGA
 	lengthAddr = read_user_reg(0x8);
