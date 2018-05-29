@@ -55,7 +55,7 @@ struct gpudma_state_t {
 
 //zyuxuan
 struct cpuaddr_state_t {
-	void* handle;
+	//void* handle;
 	uint64_t paddr;
 };
 

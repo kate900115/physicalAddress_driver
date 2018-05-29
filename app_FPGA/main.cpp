@@ -21,11 +21,6 @@
 
 // zyuxuan
 #include <iostream>
-// zyuxuan for FPGA
-//#include "FPGA/FPGACoreLib.h"
-//#include "FPGA/FPGACoreLib.cpp"
-//#include "FPGA/FPGAHealthLib.h"
-//#include "FPGA/FPGAHealthLib.cpp"
 
 //-----------------------------------------------------------------------------
 
@@ -70,7 +65,6 @@ int main(int argc, char *argv[])
 
 	cpuaddr_state_t *phy;
 	phy = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
-	phy->handle = NULL;
 	phy->paddr = 0;
 	
 	res = ioctl(fd, IOCTL_V2P, phy);
@@ -85,11 +79,9 @@ int main(int argc, char *argv[])
 
 	//configure package length
 	uint64_t lengthAddr = read_user_reg(0xC);
-	
-	
+		
 	cpuaddr_state_t *length;
 	length = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
-	length->handle = NULL;
 	length->paddr = lengthAddr;
 	res = ioctl(fd, IOCTL_P2V, length);
 
@@ -113,9 +105,7 @@ int main(int argc, char *argv[])
 	
 	// configure package address
 	// and send the physical address to FPGA
-	lengthAddr = read_user_reg(0xE);
-	length->handle = NULL;
-	length->paddr = lengthAddr;
+	length->paddr = read_user_reg(0xE);
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
@@ -135,9 +125,7 @@ int main(int argc, char *argv[])
 	printf("PackAddr = %p\n", *PackAddr);
 
 	// send magic number to FPGA
-	lengthAddr = read_user_reg(0x8);
-	length->handle = NULL;
-	length->paddr = lengthAddr;
+	length->paddr = read_user_reg(0x8);
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
@@ -156,9 +144,7 @@ int main(int argc, char *argv[])
 	std::cout<<"the magicNum written in FPGA is "<<*magicNum<<std::endl;
 
 	// read to check if the value is written
-	lengthAddr = read_user_reg(0x30);
-	length->handle = NULL;
-	length->paddr = lengthAddr;
+	length->paddr = read_user_reg(0x30);
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
@@ -169,11 +155,14 @@ int main(int argc, char *argv[])
 	void* va2 = mmap(0, 512, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (va2 == MAP_FAILED){
 		fprintf(stderr, "%s():%s\n", __FUNCTION__, strerror(errno));
-		va1 = 0;
+		va2 = 0;
 	}
 
 	int* Reg48 = (int*)va2;
 	std::cout<<"the value in reg 48 is "<< *Reg48<<"\n";
+
+	// unmmap all allocated address
+	
 
 	close(fd);
 

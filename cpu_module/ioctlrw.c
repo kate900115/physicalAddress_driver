@@ -82,8 +82,8 @@ int ioctl_v2p_convert(unsigned long arg){
 	}
 
 	
-	void* address = addr.handle;
-	phys_addr_t paddr = virt_to_phys(address);
+//	void* address = addr.handle;
+//	phys_addr_t paddr = virt_to_phys(address);
 	
 	// read the address from saved address
 	struct savedAddress temp = savedPhysAddr(0,0,1);
