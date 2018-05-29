@@ -38,7 +38,7 @@
 
 //-----------------------------------------------------------------------------
 
-MODULE_AUTHOR("Yuxuan Zhang. zyuxuan@umich.edu");
+MODULE_AUTHOR("Yuxuan Zhang. v-yuxz@microsoft.com");
 MODULE_LICENSE("GPL");
 
 //-----------------------------------------------------------------------------
@@ -53,7 +53,7 @@ static struct gpumem *file_to_device( struct file *file )
 
 //--------------------------------------------------------------------
 
-static int gpumem_open( struct inode *inode, struct file *file )
+static int v2p2v_open( struct inode *inode, struct file *file )
 {
     file->private_data = (void*)&dev;
     return 0;
@@ -61,7 +61,7 @@ static int gpumem_open( struct inode *inode, struct file *file )
 
 //-----------------------------------------------------------------------------
 
-static int gpumem_close( struct inode *inode, struct file *file )
+static int v2p2v_close( struct inode *inode, struct file *file )
 {
     file->private_data = 0;
     return 0;
@@ -69,7 +69,7 @@ static int gpumem_close( struct inode *inode, struct file *file )
 
 //-----------------------------------------------------------------------------
 
-static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg )
+static long v2p2v_ioctl( struct file *file, unsigned int cmd, unsigned long arg )
 {
     int error = 0;
     if (cmd==IOCTL_V2P) {
@@ -86,7 +86,7 @@ static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg
 
 //-----------------------------------------------------------------------------
 
-int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
+int v2p2v_mmap(struct file *file, struct vm_area_struct *vma)
 {
 
 	pr_info("[mmap] I'm in mmap\n");
@@ -154,11 +154,11 @@ int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
 struct file_operations gpumem_fops = {
 
     .owner = THIS_MODULE,
-    .unlocked_ioctl = gpumem_ioctl,
-    .compat_ioctl = gpumem_ioctl,
-    .open = gpumem_open,
-    .release = gpumem_close,
-    .mmap = gpumem_mmap,
+    .unlocked_ioctl = v2p2v_ioctl,
+    .compat_ioctl = v2p2v_ioctl,
+    .open = v2p2v_open,
+    .release = v2p2v_close,
+    .mmap = v2p2v_mmap,
 };
 
 //-----------------------------------------------------------------------------
