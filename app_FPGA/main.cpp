@@ -43,12 +43,17 @@ uint64_t read_user_reg( uint64_t usr_reg_addr){
 }
 
 
+void* getAddrWithOffset(void* addr, uint64_t usr_reg_addr){
+	char* tmp = (char*) addr;
+	void* returnAddr = (void*)(tmp + ((interpAddr<<4) | (0xC<<8)));
+	return returnAddr;
+}
+
 
 int main(int argc, char *argv[])
 {
 
 	int res = -1;
-	//unsigned count=0x0A000000;
 
 	int fd = open("/dev/v2p2v", O_RDWR, 0);
 	//int fd = open("/dev/"GPUMEM_DRIVER_NAME, O_RDWR, 0);
@@ -71,7 +76,7 @@ int main(int argc, char *argv[])
 	res = ioctl(fd, IOCTL_V2P, phy);
 	
 	if (res<0){
-		fprintf(stderr, "Error in IOCTL_LOCK\n");
+		fprintf(stderr, "Error in IOCTL_V2P\n");
 		exit(-1);
 	}
 
@@ -89,14 +94,12 @@ int main(int argc, char *argv[])
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
-		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		fprintf(stderr, "Error in IOCTL_P2V\n");
 		exit(-1);
 	}
 
 	void* va = mmap(0, 512, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	char* tmp = (char*) va;
-	int* add = (int*)(tmp+ ((interpAddr<<4) | (0xC<<8)));
-	
+
 	printf("virtual addr = %p\n", va);
 
 
@@ -105,19 +108,21 @@ int main(int argc, char *argv[])
 		va = 0;
 	}
 
-	//int* add = (int*) va;
+	int* add = (int*)getAddrWithOffset(va, 0xC);
+	
 	*add = 1024;
 	printf("add = %p\n", add);
 	printf("add = %d\n", *add);
 	
 	// configure package address
+	// and send the physical address to FPGA
 	lengthAddr = read_user_reg(0xE);
 	length->handle = NULL;
 	length->paddr = lengthAddr;
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
-		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		fprintf(stderr, "Error in IOCTL_P2V\n");
 		exit(-1);
 	}
 
@@ -127,17 +132,20 @@ int main(int argc, char *argv[])
 		va0 = 0;
 	}
 
-	int* add0 = (int*)va0;
+
+	char* tmp1 = (char*) va0;
+
+	int* add0 = (int*)getAddrWithOffset(va0, 0xE);
 	*add0 = phy->paddr; 
 
-	// magic number
+	// send magic number to FPGA
 	lengthAddr = read_user_reg(0x8);
 	length->handle = NULL;
 	length->paddr = lengthAddr;
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
-		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		fprintf(stderr, "Error in IOCTL_P2V\n");
 		exit(-1);
 	}
 
@@ -147,9 +155,8 @@ int main(int argc, char *argv[])
 		va1 = 0;
 	}
 
-	int* magicNum = (int*)va1;
+	int* magicNum = (int*)getAddrWithOffset(va1, 0x8);
 	*magicNum = 123; 
-	//sleep(2);
 	std::cout<<"the magicNum written in FPGA is "<<*magicNum<<std::endl;
 
 	// read to check if the value is written
@@ -159,7 +166,7 @@ int main(int argc, char *argv[])
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
-		fprintf(stderr, "Error in IOCTL_GPUDMA_MEM_LOCK\n");
+		fprintf(stderr, "Error in IOCTL_P2V\n");
 		exit(-1);
 	}
 
