@@ -20,7 +20,7 @@
 
 #define IOCTL_V2P		GPUMEM_MAKE_IOCTL(10)
 #define IOCTL_P2V		GPUMEM_MAKE_IOCTL(11)
-#define IOCTL_GPUMEM_STATE		GPUMEM_MAKE_IOCTL(12)
+//#define IOCTL_GPUMEM_STATE		GPUMEM_MAKE_IOCTL(12)
 
 //-----------------------------------------------------------------------------
 // for boundary alignment requirement
@@ -29,33 +29,9 @@
 #define GPU_BOUND_OFFSET (GPU_BOUND_SIZE-1)
 #define GPU_BOUND_MASK (~GPU_BOUND_OFFSET)
 
-//-----------------------------------------------------------------------------
-
-struct gpudma_lock_t {
-    void*    handle;
-    uint64_t addr;
-    uint64_t size;
-    size_t   page_count;
-};
-
-//-----------------------------------------------------------------------------
-
-struct gpudma_unlock_t {
-    void*    handle;
-};
-
-//-----------------------------------------------------------------------------
-
-struct gpudma_state_t {
-    void*       handle;
-    size_t      page_count;
-    size_t      page_size;
-    uint64_t    pages[1];
-};
 
 //zyuxuan
 struct cpuaddr_t {
-	//void* handle;
 	uint64_t paddr;
 };
 

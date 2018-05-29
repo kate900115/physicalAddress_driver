@@ -38,7 +38,7 @@
 
 //-----------------------------------------------------------------------------
 
-MODULE_AUTHOR("Vladimir Karakozov. karakozov@gmail.com");
+MODULE_AUTHOR("Yuxuan Zhang. zyuxuan@umich.edu");
 MODULE_LICENSE("GPL");
 
 //-----------------------------------------------------------------------------
@@ -98,33 +98,20 @@ int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
 	}
 	
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	
-	//    void* kmalloc_area = kmalloc(512, GFP_USER);
-	//    if (kmalloc_area==NULL){
-	//	pr_info("@@@@@ kmalloc failed!");
-	//    }
-	//uint64_t phyAddr = virt_to_phys(kmalloc_area);
 
-	
 	// read value from savedPhysAddr
 	
 	struct savedAddress savedAddr;
 	savedAddr = savedPhysAddr(0, 0, 1);
 
-	pr_info("[mmap] read previously saved address from kernel\n");
-	pr_info("[mmap] physical address = %ld\n", savedAddr.addr);
+	pr_info("[mmap]\t read previously saved address from kernel\n");
+	pr_info("[mmap]\t physical address = %ld\n", savedAddr.addr);
 
 	if (savedAddr.op==1){
 		//p2v
-	//	void* ioremap_area = ioremap(savedAddr.addr, size);
-	//	if (ioremap_area==NULL){
-	//		pr_info("[mmap] ioremap unsuccessful\n");
-	//		return -ENXIO;
-	//	}
 		
 		//int errorCode = remap_pfn_range(vma, vma->vm_start+savedAddr.addr, savedAddr.addr, size, PAGE_SHARED);  
 		int errorCode = remap_pfn_range(vma, vma->vm_start, savedAddr.addr>>PAGE_SHIFT, size, PAGE_SHARED);  
-
 
 		// write noop to saved address operation element
 		savedPhysAddr(savedAddr.addr, 0, 0);
@@ -144,7 +131,7 @@ int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
 		savedPhysAddr(phyaddr,2,0);
 
 		if (kmalloc_area==NULL){
-			pr_info("[mmap] kmalloc area failed\n");
+			pr_info("[mmap]\t kmalloc area failed\n");
 			return -ENXIO;
 		}
 		//int errorCode = remap_pfn_range(vma, vma->vm_start+phyaddr, phyaddr, size, PAGE_SHARED);
