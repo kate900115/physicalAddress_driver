@@ -74,8 +74,8 @@ int ioctl_v2p_convert(unsigned long arg){
 	pr_info("[ioctl_v2p] I'm ioctl_v2p_convert\n");	
 	int error = 0;
 	// to copy the argument from user space to kernel space
-	struct cpuaddr_state_t addr;
-	if (copy_from_user(&addr, (void*)arg, sizeof(struct cpuaddr_state_t))){
+	struct cpuaddr_t addr;
+	if (copy_from_user(&addr, (void*)arg, sizeof(struct cpuaddr_t))){
 		printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
 		error = -EFAULT;
 		return error;
@@ -95,7 +95,7 @@ int ioctl_v2p_convert(unsigned long arg){
 
 	pr_info("[ioctl_v2p] write 0 to saved address\n");
 
-	if (copy_to_user((void*)arg, &addr, sizeof(struct cpuaddr_state_t))){
+	if (copy_to_user((void*)arg, &addr, sizeof(struct cpuaddr_t))){
 		printk(KERN_ERR"%s(): Error in copy_from_user()\n",__FUNCTION__);
 		error = -EFAULT;
 		return error;
@@ -109,8 +109,8 @@ int ioctl_p2v_convert(unsigned long arg){
 	pr_info("[ioctl_p2v] I'm ioctl_p2v_convert\n");	
 	int error = 0;
 	// to copy the argument from user space to kernel space
-	struct cpuaddr_state_t addr;
-	if (copy_from_user(&addr, (void*)arg, sizeof(struct cpuaddr_state_t))){
+	struct cpuaddr_t addr;
+	if (copy_from_user(&addr, (void*)arg, sizeof(struct cpuaddr_t))){
 		printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
 		error = -EFAULT;
 		return error;

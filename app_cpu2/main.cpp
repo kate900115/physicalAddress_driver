@@ -48,7 +48,7 @@ uint64_t read_user_reg( uint64_t usr_reg_addr){
 
 int main(int argc, char *argv[])
 {
-	cpuaddr_state_t *vaddr;
+	cpuaddr_t *vaddr;
 
 	int res = -1;
 	//unsigned count=0x0A000000;
@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
 
 
 
-	cpuaddr_state_t *test;
+	cpuaddr_t *test;
 	
-	test = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	test = (struct cpuaddr_t*)malloc(sizeof(struct cpuaddr_t));
 //	int *addr1;
 //	addr1 = (int*) malloc(sizeof(int));
 //	test->handle = (void*)addr1;
@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
 
 	
 
-	cpuaddr_state_t *test_p2v;
-	test_p2v = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	cpuaddr_t *test_p2v;
+	test_p2v = (struct cpuaddr_t*)malloc(sizeof(struct cpuaddr_t));
 	//test_p2v->handle = NULL;
 	test_p2v->paddr = test->paddr;
 	res = ioctl(fd, IOCTL_P2V, test_p2v);

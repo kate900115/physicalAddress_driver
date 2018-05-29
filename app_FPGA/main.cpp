@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s():%s\n", __FUNCTION__, strerror(errno));
 	}
 
-	cpuaddr_state_t *phy;
-	phy = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	cpuaddr_t *phy;
+	phy = (struct cpuaddr_t*)malloc(sizeof(struct cpuaddr_t));
 	phy->paddr = 0;
 	
 	res = ioctl(fd, IOCTL_V2P, phy);
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
 	//configure package length
 	uint64_t lengthAddr = read_user_reg(0xC);
 		
-	cpuaddr_state_t *length;
-	length = (struct cpuaddr_state_t*)malloc(sizeof(struct cpuaddr_state_t));
+	cpuaddr_t *length;
+	length = (struct cpuaddr_t*)malloc(sizeof(struct cpuaddr_t));
 	length->paddr = lengthAddr;
 	res = ioctl(fd, IOCTL_P2V, length);
 
@@ -162,7 +162,11 @@ int main(int argc, char *argv[])
 	std::cout<<"the value in reg 48 is "<< *Reg48<<"\n";
 
 	// unmmap all allocated address
-	
+	munmap(va, 512);
+	munmap(va0, 512);	
+	munmap(va1, 512);
+	munmap(va2, 512);	
+
 
 	close(fd);
 
