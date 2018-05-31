@@ -1,7 +1,7 @@
   
 #include "cuda.h"
 //#include "cuda_runtime_api.h"
-#include "gpumemioctl.h"
+#include "v2p2vioctl.h"
 
 #include <dirent.h>
 #include <signal.h>
@@ -74,7 +74,8 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	std::cout<<"phys address = "<<phy->paddr<<std::endl;	
+	printf("phys address = %p\n", cpu_va);	
+	printf("FPGA haven't written the CPU memory: %lx\n", *(int*)cpu_va);
 
 
 	//configure package length
@@ -144,7 +145,7 @@ int main(int argc, char *argv[])
 	std::cout<<"the magicNum written in FPGA is "<<*magicNum<<std::endl;
 
 	// read to check if the value is written
-	length->paddr = read_user_reg(0x30);
+	/*length->paddr = read_user_reg(0x30);
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
@@ -160,12 +161,18 @@ int main(int argc, char *argv[])
 
 	int* Reg48 = (int*)va2;
 	std::cout<<"the value in reg 48 is "<< *Reg48<<"\n";
+*/
+
+	// check the result of the address
+	sleep(1);
+	printf("FPGA writes CPU memory: %lx\n",*(int*)cpu_va);
+
 
 	// unmmap all allocated address
 	munmap(va, 512);
 	munmap(va0, 512);	
 	munmap(va1, 512);
-	munmap(va2, 512);	
+	munmap(cpu_va, 512);	
 
 
 	close(fd);
