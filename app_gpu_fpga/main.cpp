@@ -263,9 +263,9 @@ int main(int argc, char *argv[])
 			//}
 
 			while (*h_FPGAflag);
-			//printf("p_flag = %d\n", *p_flag);
+			printf("h_FPGAflag = %d\n", *h_FPGAflag);
 			*h_FPGAflag = 1;
-			//printf("p_flag = %d\n", *p_flag);
+			printf("h_FPGAflag = %d\n", *h_FPGAflag);
 			//printf("CPU: flag is set to be 1.\n");
 
 			//cuMemcpyDtoH(h_c, d_c, sizeof(int)*m*n);
