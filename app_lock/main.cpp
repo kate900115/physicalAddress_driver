@@ -49,6 +49,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    int fd_v2p2v = open("/dev/v2p2v", O_RDWR, 0);
+    if (fd_v2p2v < 0){
+	printf("Error open file %s\n","/dev/v2p2v");
+	return -1;
+    }
+
     checkError(cuInit(0));
 
     int total = 0;
