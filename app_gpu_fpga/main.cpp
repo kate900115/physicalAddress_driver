@@ -43,7 +43,7 @@ uint64_t read_user_reg(uint64_t usr_reg_addr){
 
 void* getAddrWithOffset(void* addr, uint64_t usr_reg_addr){
 	char* tmp = (char*) addr;
-	void* returnAddr = (void*)(tmp+((interpAddr<<4)|(0xC<<8)));
+	void* returnAddr = (void*)(tmp+((interpAddr<<4)|(usr_reg_addr<<8)));
 	return returnAddr;
 }
 
@@ -150,11 +150,11 @@ int main(int argc, char *argv[])
 	// zyuxuan: to allow GPU to access to CPU memory space
 //	void* p;
 //	p = (int*)malloc(20*sizeof(int));
-	checkError(cuMemHostRegister(getAddrWithOffset(p,0xC), 20*sizeof(int), CU_MEMHOSTREGISTER_IOMEMORY));
+	checkError(cuMemHostRegister(getAddrWithOffset(p,0x8), 20*sizeof(int), CU_MEMHOSTREGISTER_IOMEMORY));
 	CUdeviceptr d_FPGAflag;
-	checkError(cuMemHostGetDevicePointer(&d_FPGAflag, getAddrWithOffset(p,0xC),0));
+	checkError(cuMemHostGetDevicePointer(&d_FPGAflag, getAddrWithOffset(p,0x8),0));
 
-	int* h_FPGAflag = (int*) getAddrWithOffset(p, 0xC);
+	int* h_FPGAflag = (int*) getAddrWithOffset(p, 0x8);
 
 
     size_t size = 0x100000;

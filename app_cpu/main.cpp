@@ -1,7 +1,7 @@
   
 #include "cuda.h"
 //#include "cuda_runtime_api.h"
-#include "gpumemioctl.h"
+#include "v2p2vioctl.h"
 
 #include <dirent.h>
 #include <signal.h>
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	int fd = open("/dev/v2p2v", O_RDWR, 0);
 	//int fd = open("/dev/"GPUMEM_DRIVER_NAME, O_RDWR, 0);
 	if (fd < 0) {
-		printf("Error open file %s\n", "/dev/"GPUMEM_DRIVER_NAME);
+		printf("Error open file %s\n", "/dev/v2p2v");
 		return -1;
 	}	
 
@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
 
 	std::cout<<"virtual to physical"<<std::endl;
 	std::cout<<"physical address = "<<test->paddr<<std::endl;
+	printf("address = %ld\n", *((int*)address));
 
 	/*----------test----------*/
 
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
 
 	//*virt_addr = 1;
 
-	std::cout<<"value = "<<*num<<std::endl;
+	std::cout<<"value = "<<*(int*)address<<std::endl;
 
 
 	/*----------test-----------*/

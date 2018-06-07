@@ -21,6 +21,8 @@
 
 // zyuxuan
 #include <iostream>
+#include <ctime>
+#include <chrono>
 
 //-----------------------------------------------------------------------------
 
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
 	int fd = open("/dev/v2p2v", O_RDWR, 0);
 	//int fd = open("/dev/"GPUMEM_DRIVER_NAME, O_RDWR, 0);
 	if (fd < 0) {
-		printf("Error open file %s\n", "/dev/"GPUMEM_DRIVER_NAME);
+		printf("Error open file %s\n", "/dev/v2p2v");
 		return -1;
 	}
 
@@ -62,6 +64,8 @@ int main(int argc, char *argv[])
 	if (cpu_va == MAP_FAILED){
 		fprintf(stderr, "%s():%s\n", __FUNCTION__, strerror(errno));
 	}
+
+	printf("virtual addr: %p\n", cpu_va);
 
 	cpuaddr_t *phy;
 	phy = (struct cpuaddr_t*)malloc(sizeof(struct cpuaddr_t));
@@ -74,7 +78,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	printf("phys address = %p\n", cpu_va);	
+	printf("phys address = %p\n", phy->paddr);	
 	printf("FPGA haven't written the CPU memory: %lx\n", *(int*)cpu_va);
 
 
@@ -98,11 +102,21 @@ int main(int argc, char *argv[])
 		va = 0;
 	}
 
-	int* len = (int*)getAddrWithOffset(va, 0xC);
-	
-	*len = 1024;
-	printf("add = %p\n", len);
-	printf("add = %d\n", *len);
+	volatile uint64_t* len = (uint64_t*)getAddrWithOffset(va, 0xC);
+
+	int count = 0;
+	auto start = std::chrono::high_resolution_clock::now();
+	int a = 0;
+	while(count<1000000){	
+		count++;
+		*len = count;
+		//a = a+1;
+	}
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> diff = end -start;
+	std::cout<<"it took me "<<diff.count()<<" seconds."<<std::endl;
+	printf("length = %p\n", len);
+	printf("length = %ld\n", *len);
 	
 	// configure package address
 	// and send the physical address to FPGA
@@ -120,7 +134,7 @@ int main(int argc, char *argv[])
 		va0 = 0;
 	}
 
-	int* PackAddr = (int*)getAddrWithOffset(va0, 0xE);
+	uint64_t* PackAddr = (uint64_t*)getAddrWithOffset(va0, 0xE);
 	*PackAddr = phy->paddr; 
 
 	printf("PackAddr = %p\n", *PackAddr);
@@ -140,12 +154,12 @@ int main(int argc, char *argv[])
 		va1 = 0;
 	}
 
-	int* magicNum = (int*)getAddrWithOffset(va1, 0x8);
-	*magicNum = 123; 
+	uint64_t* magicNum = (uint64_t*)getAddrWithOffset(va1, 0x8);
+	*magicNum = 0x2; 
 	std::cout<<"the magicNum written in FPGA is "<<*magicNum<<std::endl;
 
 	// read to check if the value is written
-	/*length->paddr = read_user_reg(0x30);
+	length->paddr = read_user_reg(0x30);
 	res = ioctl(fd, IOCTL_P2V, length);
 
 	if (res<0){
@@ -161,12 +175,13 @@ int main(int argc, char *argv[])
 
 	int* Reg48 = (int*)va2;
 	std::cout<<"the value in reg 48 is "<< *Reg48<<"\n";
-*/
+
 
 	// check the result of the address
 	sleep(1);
-	printf("FPGA writes CPU memory: %lx\n",*(int*)cpu_va);
-
+	for (int i =0; i<10; i++){
+		printf("FPGA writes CPU memory: %lx\n",*((int*)cpu_va+i));
+	}
 
 	// unmmap all allocated address
 	munmap(va, 512);

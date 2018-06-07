@@ -15,7 +15,7 @@ NVIDIA_DRIVER_PATH := ../nvidia
 
 INCDIR := . $(CUDADIR)/include ../cpu_module $(NVIDIA_DRIVER_PATH)/kernel/nvidia
 INCLUDE := $(addprefix -I, $(INCDIR))
-CFLAGS := -D__LINUX__ -g -Wall $(INCLUDE) -I /usr/local/cuda-9.1/include
+CFLAGS := -D__LINUX__ -g -std=c++11 -Wall $(INCLUDE) -I /usr/local/cuda-9.1/include
 SRCFILE := $(wildcard *.cpp) 
 OBJFILE := $(patsubst %.cpp,%.o, $(SRCFILE))
 
