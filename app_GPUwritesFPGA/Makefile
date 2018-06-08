@@ -17,7 +17,7 @@ NVIDIA_DRIVER_PATH := ../nvidia
 #INCDIR := . $(CUDADIR)/include ../module $(NVIDIA_DRIVER_PATH)/kernel/nvidia
 #INCLUDE := $(addprefix -I, $(INCDIR))
 #CFLAGS := -D__LINUX__ -g -Wall $(INCLUDE) 
-CFLAGS := -D__LINUX__ -g -Wall -std=c++11 -I /usr/local/cuda-9.1/include -I /home/zyuxuan/gpudma/module -I /home/zyuxuan/gpudma/v2p2v
+CFLAGS := -D__LINUX__ -g -Wall -std=c++11 -I /usr/local/cuda-9.1/include -I /home/zyuxuan/gpudma/gpumem -I /home/zyuxuan/gpudma/v2p2v
 #CFLAGS := -D__LINUX__ -g -I /usr/local/cuda-9.0/targets/x86_64-linux/include -I ~/zyuxuan/gpudma/module -std=c++11
 
 
