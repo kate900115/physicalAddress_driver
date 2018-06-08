@@ -13,7 +13,7 @@ LD = $(CROSS_COMPILE)gcc
 NVIDIA_DRIVER_PATH := ../nvidia
 
 
-INCDIR := . $(CUDADIR)/include ../module $(NVIDIA_DRIVER_PATH)/kernel/nvidia
+INCDIR := . $(CUDADIR)/include ../gpumem $(NVIDIA_DRIVER_PATH)/kernel/nvidia
 INCLUDE := $(addprefix -I, $(INCDIR))
 CFLAGS := -D__LINUX__ -g -Wall $(INCLUDE) -I /usr/local/cuda-9.1/include
 SRCFILE := $(wildcard *.cpp) 
