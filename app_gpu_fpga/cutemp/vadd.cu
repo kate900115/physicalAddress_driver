@@ -4,7 +4,7 @@ extern "C" __global__ void vadd(float *A, float* B, float* C, int* d_lock, int* 
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int count = 0;
-	while(count<10){
+	while(count<1000000){
 		count++;
 		while (*d_lock!=0){
 			atomicCAS(d_lock, 0,0);
