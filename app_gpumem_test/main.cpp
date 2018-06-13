@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 			
 		int countNum = 0;
 		auto start = std::chrono::high_resolution_clock::now();
-		while(countNum<10000){
+		while(countNum<1000000){
 			
 		//printf("CPU: set lock to be zero!\n%d", countNum);
 			
