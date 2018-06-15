@@ -1,34 +1,50 @@
 #include "vadd.h"
+
+__device__ int monitor;
+__device__ int monitor2;
 	
 extern "C" __global__ void vadd(float *A, float* B, float* C, int* d_lock, volatile int* flag){
-	int j = blockIdx.x * blockDim.x + threadIdx.x;
-	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = threadIdx.x;
+	int i = threadIdx.y;
+
+	int jj = blockIdx.x * blockDim.x + threadIdx.x;
+	int ii = blockIdx.y * blockDim.y + threadIdx.y; 
+
+	int blockNum = blockDim.x * blockDim.y * blockDim.z;	
+
 	int count = 0;
+
 	while(count<1000000){
 		count++;
-		//printf("%d\n", *d_lock);
+		
 		if ((i==0)&&(j==0)){
 			while (*d_lock!=0){
 				atomicCAS(d_lock, 0,0);
 			}
+			atomicAdd(&monitor, 1);
+			while(atomicCAS(&monitor, blockNum, blockNum)!=blockNum);
+			atomicCAS(d_lock,0 ,1);
 		}
 		__syncthreads();
+		
+		// the original GPU kernel code here
+
+
+		// waiting for all threads finishes the code.
 		if ((i==0)&&(j==0)){
+			atomicAdd(&monitor2, 1);
+			while(atomicCAS(&monitor2, blockNum, blockNum)!=blockNum);
 			atomicCAS(d_lock, 0, 1);
-		//	printf("GPU: lock is set to be 1\n");
 		}
-
-		// GPU kernel code here
-	/*	if ((i<m)&&(j<n)) {
-			C[i*n+j] = A[i*n+j]+B[i*n+j];
-		}
-*/
-	
 		__syncthreads();
 
-		if ((i==0)&&(j==0)){
+
+		// set monitor to be 0 for next round of execution
+		// notify FPGA to release the lock
+		if ((ii==0)&&(jj==0)){
+			monitor = 0;
+			monitor2 = 0;
 			*flag = 0;
-		//	printf("GPU: flag is set to be 0\n");
 		}
 	}
 }
