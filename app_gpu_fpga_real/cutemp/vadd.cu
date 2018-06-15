@@ -34,12 +34,11 @@ extern "C" __global__ void vadd(float *A, float* B, float* C, int* d_lock, volat
 		if ((i==0)&&(j==0)){
 			atomicAdd(&monitor2, 1);
 			while(atomicCAS(&monitor2, blockNum, blockNum)!=blockNum);
-			atomicCAS(d_lock, 0, 1);
 		}
 		__syncthreads();
 
 
-		// set monitor to be 0 for next round of execution
+		// clean up monitor and monitor2 for next round of execution
 		// notify FPGA to release the lock
 		if ((ii==0)&&(jj==0)){
 			monitor = 0;
