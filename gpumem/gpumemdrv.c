@@ -119,8 +119,6 @@ struct file_operations gpumem_fops = {
     .mmap = gpumem_mmap,
 };
 
-//-----------------------------------------------------------------------------
-
 static struct miscdevice gpumem_dev = {
 
     MISC_DYNAMIC_MINOR,

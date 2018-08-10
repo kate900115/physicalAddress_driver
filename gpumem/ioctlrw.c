@@ -13,7 +13,6 @@
 #include "gpumemdrv.h"
 #include "gpumemioctl.h"
 
-//-----------------------------------------------------------------------------
 
 int get_nv_page_size(int val)
 {
@@ -25,8 +24,11 @@ int get_nv_page_size(int val)
     return 0;
 }
 
-//--------------------------------------------------------------------
 
+// free_nvp_callback() is a callback function that	//
+// is used by nvidia_p2p_get_pages()			//	
+// for more details, please refer:			//
+// https://docs.nvidia.com/cuda/gpudirect-rdma 		//
 void free_nvp_callback(void *data)
 {
     int res;
@@ -43,7 +45,6 @@ void free_nvp_callback(void *data)
     }
 }
 
-//-----------------------------------------------------------------------------
 
 int ioctl_mem_lock(struct gpumem *drv, unsigned long arg)
 {
@@ -52,14 +53,20 @@ int ioctl_mem_lock(struct gpumem *drv, unsigned long arg)
 	struct gpumem_t *entry = 0;
 	struct gpudma_lock_t param;
 
-	// copy user space argument (lock) to kernel space
+	// copy user space argument (lock) to kernel 		//
+	// space "gpudma_lock_t param"				//
     	if(copy_from_user(&param, (void *)arg, sizeof(struct gpudma_lock_t))) {
 		printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
 		error = -EFAULT;
 		goto do_exit;
 	}
 
-	// allocate a memory space for 
+	// allocate a memory space for gpumem_t *entry		//
+	// initialize the *entry:				//
+	// 	(1) initialize the list_head.			//
+	//	(2) initialize the handle, 			//
+	//	    handle will be passed back to user space.	//
+	//	(3) calculate the virt_start and the pin_size.	//
 	entry = (struct gpumem_t*)kzalloc(sizeof(struct gpumem_t), GFP_KERNEL);
 	if(!entry) {
 		printk(KERN_ERR"%s(): Error allocate memory to mapping struct\n", __FUNCTION__);
@@ -79,6 +86,18 @@ int ioctl_mem_lock(struct gpumem *drv, unsigned long arg)
 		goto do_free_mem;
 	}
 
+	// (1) invoke nvidia_p2p_get_pages() to get 		//
+	//     page_table. 					//
+	// (2) and store this page_table into 			//
+	//     entry->page_table.				//
+	// (3) copy the *entry to param.handle.			//
+	// (4) copy # of entries to param.page_count.		//
+	// (5) copy param from kernel space back to user space 	//
+	//     "lock".						//
+	// (6) add the current entry->list into 		//
+	//     "static gpumem dev->table_list", which is 	//
+	//     defined in gpumemdrv.c.				//
+
 	error = nvidia_p2p_get_pages(0, 0, entry->virt_start, pin_size, &entry->page_table, free_nvp_callback, entry);
 	if(error != 0) {
 		printk(KERN_ERR"%s(): Error in nvidia_p2p_get_pages()\n", __FUNCTION__);
@@ -86,9 +105,9 @@ int ioctl_mem_lock(struct gpumem *drv, unsigned long arg)
 		goto do_free_mem;
 	}
 
+
 	param.page_count = entry->page_table->entries;
 	param.handle = entry;
-
 	printk(KERN_ERR"%s(): param.handle: %p\n", __FUNCTION__, param.handle);
 
 	if(copy_to_user((void *)arg, &param, sizeof(struct gpudma_lock_t))) {
@@ -111,55 +130,65 @@ do_exit:
 	return error;
 }
 
-//-----------------------------------------------------------------------------
 
 int ioctl_mem_unlock(struct gpumem *drv, unsigned long arg)
 {
-    int error = -EINVAL;
-    struct gpumem_t *entry = 0;
-    struct gpudma_unlock_t param;
-    struct list_head *pos, *n;
+	int error = -EINVAL;
+	struct gpumem_t *entry = 0;
+	struct gpudma_unlock_t param;
+	struct list_head *pos, *n;
 
-    if(copy_from_user(&param, (void *)arg, sizeof(struct gpudma_unlock_t))) {
-        printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
-        error = -EFAULT;
-        goto do_exit;
-    }
 
-    list_for_each_safe(pos, n, &drv->table_list) {
+	// copy user space argument (lock) to kernel 		//
+	// space "gpudma_lock_t param"				//
+	if(copy_from_user(&param, (void *)arg, sizeof(struct gpudma_unlock_t))) {
+		printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
+		error = -EFAULT;
+		goto do_exit;
+	}
 
-        entry = list_entry(pos, struct gpumem_t, list);
-        if(entry) {
-            if(entry->handle == param.handle) {
+	// iterate all the element in the list that is stored	// 
+	// in the "gpumem dev", once there is an element in 	//
+	// list which is the same as the argument we copied 	//
+	// from user space, we:					//
+	// (1) invoke nvidia_p2p_put_pages() to unlock the 	//
+	//     pinned memory.					//
+	// (2) delete this element from the dev->table_list.	//
+	// (3) free the corresponding entry. 			//
+ 
+	list_for_each_safe(pos, n, &drv->table_list) {
 
-                printk(KERN_ERR"%s(): param.handle = %p\n", __FUNCTION__, param.handle);
-                printk(KERN_ERR"%s(): entry.handle = %p\n", __FUNCTION__, entry->handle);
+		entry = list_entry(pos, struct gpumem_t, list);
+		if(entry) {
+			if(entry->handle == param.handle) {
+	
+				printk(KERN_ERR"%s(): param.handle = %p\n", __FUNCTION__, param.handle);
+				printk(KERN_ERR"%s(): entry.handle = %p\n", __FUNCTION__, entry->handle);
 
-                if(entry->virt_start && entry->page_table) {
-                    error = nvidia_p2p_put_pages(0, 0, entry->virt_start, entry->page_table);
-                    if(error != 0) {
-                        printk(KERN_ERR"%s(): Error in nvidia_p2p_put_pages()\n", __FUNCTION__);
-                        goto do_exit;
-                    }
-                    //entry->virt_start = 0ULL;
-                    //entry->page_table = 0;
-                    printk(KERN_ERR"%s(): nvidia_p2p_put_pages() - Ok!\n", __FUNCTION__);
-                }
+ 				if(entry->virt_start && entry->page_table) {
+					error = nvidia_p2p_put_pages(0, 0, entry->virt_start, entry->page_table);
+					if(error != 0) {
+						printk(KERN_ERR"%s(): Error in nvidia_p2p_put_pages()\n", __FUNCTION__);
+						goto do_exit;
+					}
+					//entry->virt_start = 0ULL;
+					//entry->page_table = 0;
+					printk(KERN_ERR"%s(): nvidia_p2p_put_pages() - Ok!\n", __FUNCTION__);
+				}
 
-                list_del(pos);
-                kfree(entry);
-                break;
-            } else {
-                printk(KERN_ERR"%s(): Skip entry: %p\n", __FUNCTION__, entry->handle);
-            }
-        }
-    }
-
+				list_del(pos);
+				kfree(entry);
+				break;
+			} 
+			else {
+				printk(KERN_ERR"%s(): Skip entry: %p\n", __FUNCTION__, entry->handle);
+			}
+		}
+	}
 do_exit:
-    return error;
+	return error;
 }
 
-//-----------------------------------------------------------------------------
 
 int ioctl_mem_state(struct gpumem *drv, unsigned long arg)
 {
@@ -171,12 +200,27 @@ int ioctl_mem_state(struct gpumem *drv, unsigned long arg)
 	struct gpudma_state_t *param;
 	struct list_head *pos, *n;
 
+	// copy user space argument (state) to kernel 		//
+	// space "gpudma_state_t header"			//
 	if(copy_from_user(&header, (void *)arg, sizeof(struct gpudma_state_t))) {
 		printk(KERN_ERR"%s(): Error in copy_from_user()\n", __FUNCTION__);
 		error = -EFAULT;
 		goto do_exit;
 	}
 
+	// list_for_each_safe() is a method that is provided	//
+	// by kernel. It iterates all elements in the list	//
+	// For each element in the list, we check whether it	//
+	// is the entry we need by comparing it with the 	//	
+	// "header".						//
+	//							//
+	// If there is an entry matches "header", it means that	//
+	// the previously locked page is in the list. We can 	//
+	// get the physical address of that page. In this case,	//
+	// we get page size and physical address of each page	//
+	// and store them into an array called "pages[n]". We 	//
+	// then copy the page size and physical address back to	//
+	// user space.						//
 	list_for_each_safe(pos, n, &drv->table_list) {
 
 		entry = list_entry(pos, struct gpumem_t, list);
@@ -230,4 +274,3 @@ do_exit:
 	return error;
 }
 
-//-----------------------------------------------------------------------------
