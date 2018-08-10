@@ -27,85 +27,87 @@
 #include "gpumemioctl.h"
 #include "gpumemproc.h"
 
-//-----------------------------------------------------------------------------
 
 MODULE_AUTHOR("Vladimir Karakozov. karakozov@gmail.com");
 MODULE_LICENSE("GPL");
 
-//-----------------------------------------------------------------------------
 static struct gpumem dev;
-//-----------------------------------------------------------------------------
 
-static struct gpumem *file_to_device( struct file *file )
-{
+static struct gpumem *file_to_device( struct file *file ){
     return (struct gpumem*)file->private_data;
 }
 
-//--------------------------------------------------------------------
+// file operations includes:					//
+// (1) file open: 						//
+//     static int gpumem_open(struct inode*, struct file*)	//
+// (2) file close: 						//
+//     static int gpumem_close(struct inode*, struct file*)	//
+// (3) I/O control:						//
+//     static long gpumem_ioctl(struct file*, unsigned int,	//
+//     unsigned long)						//
+// (4) mmap: 							//
+//     int gpumem_mmap(struct file*, vm_struct_area*)		//
+//  								//
+//  these 4 operations will be registered into kernel. 		//
 
-static int gpumem_open( struct inode *inode, struct file *file )
-{
+
+static int gpumem_open( struct inode *inode, struct file *file ){
     file->private_data = (void*)&dev;
     return 0;
 }
 
-//-----------------------------------------------------------------------------
-
-static int gpumem_close( struct inode *inode, struct file *file )
-{
+static int gpumem_close( struct inode *inode, struct file *file ){
     file->private_data = 0;
     return 0;
 }
 
-//-----------------------------------------------------------------------------
+static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg){
+	int error = 0;
+	struct gpumem *dev = file_to_device(file);
+	if(!dev) {
+		printk(KERN_ERR"%s(): ioctl driver failed\n", __FUNCTION__);
+		return -ENODEV;
+	}
 
-static long gpumem_ioctl( struct file *file, unsigned int cmd, unsigned long arg )
-{
-    int error = 0;
-    struct gpumem *dev = file_to_device(file);
-    if(!dev) {
-        printk(KERN_ERR"%s(): ioctl driver failed\n", __FUNCTION__);
-        return -ENODEV;
-    }
+	switch(cmd) {
+		case IOCTL_GPUMEM_LOCK: error = ioctl_mem_lock(dev, arg); break;
+		case IOCTL_GPUMEM_UNLOCK: error = ioctl_mem_unlock(dev, arg); break;
+		case IOCTL_GPUMEM_STATE: error = ioctl_mem_state(dev, arg); break;
+    		default:
+			printk(KERN_DEBUG"%s(): Unknown ioctl command\n", __FUNCTION__);
+			error = -EINVAL;
+			break;
+    	}
 
-    switch(cmd) {
-
-    case IOCTL_GPUMEM_LOCK: error = ioctl_mem_lock(dev, arg); break;
-    case IOCTL_GPUMEM_UNLOCK: error = ioctl_mem_unlock(dev, arg); break;
-    case IOCTL_GPUMEM_STATE: error = ioctl_mem_state(dev, arg); break;
-    default:
-        printk(KERN_DEBUG"%s(): Unknown ioctl command\n", __FUNCTION__);
-        error = -EINVAL;
-        break;
-    }
-
-    return error;
+	return error;
 }
 
-//-----------------------------------------------------------------------------
 
-int gpumem_mmap(struct file *file, struct vm_area_struct *vma)
-{
-    size_t size = vma->vm_end - vma->vm_start;
+int gpumem_mmap(struct file *file, struct vm_area_struct *vma){
+	size_t size = vma->vm_end - vma->vm_start;
 
-    if (!(vma->vm_flags & VM_MAYSHARE))
-        return -EINVAL;
+	if (!(vma->vm_flags & VM_MAYSHARE)) return -EINVAL;
 
-    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-    if (remap_pfn_range(vma,
-                        vma->vm_start,
-                        vma->vm_pgoff,
-                        size,
-                        vma->vm_page_prot)) {
-        pr_err("%s(): error in remap_page_range.\n", __func__ );
-        return -EAGAIN;
-    }
+	if (remap_pfn_range(vma,
+			    vma->vm_start,
+			    vma->vm_pgoff,
+			    size,
+			    vma->vm_page_prot)) {
+		pr_err("%s(): error in remap_page_range.\n", __func__ );
+		return -EAGAIN;
+	}
 
-    return 0;
+	return 0;
 }
 
-//-----------------------------------------------------------------------------
+
+// register the ioctl(), file_open(), 		//
+// file_release(), mmap() functions to kernel. 	//
+// This functions called by user space will be  //
+// replaced by our self-designed functions.	//	
+	
 
 struct file_operations gpumem_fops = {
 
@@ -126,7 +128,7 @@ static struct miscdevice gpumem_dev = {
     &gpumem_fops
 };
 
-//-----------------------------------------------------------------------------
+// for module initialization and clean up	//
 
 static int __init gpumem_init(void)
 {
@@ -139,8 +141,6 @@ static int __init gpumem_init(void)
     return 0;
 }
 
-//-----------------------------------------------------------------------------
-
 static void __exit gpumem_cleanup(void)
 {
     pr_info(GPUMEM_DRIVER_NAME ": %s()\n", __func__);
@@ -148,9 +148,6 @@ static void __exit gpumem_cleanup(void)
     misc_deregister(&gpumem_dev);
 }
 
-//-----------------------------------------------------------------------------
-
 module_init(gpumem_init);
 module_exit(gpumem_cleanup);
 
-//-----------------------------------------------------------------------------
